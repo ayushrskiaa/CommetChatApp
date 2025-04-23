@@ -1,6 +1,9 @@
 # CometChat React Application
 
 A real-time chat application built with React and CometChat SDK, allowing users to communicate instantly with a clean and intuitive interface.
+![image](https://github.com/user-attachments/assets/36458e62-015a-4f21-97dd-bbd99aad10c6)
+![image](https://github.com/user-attachments/assets/d78e9514-7b53-4435-a29c-e10f6a105097)
+![image](https://github.com/user-attachments/assets/362d497e-3dc5-4442-9eac-6f7e5004c297)
 
 ![CometChat App](https://www.cometchat.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fcometchat-pro-ui-kit.7cf52791.png&w=1920&q=75)
 
