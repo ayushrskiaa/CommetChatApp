@@ -122,14 +122,28 @@ export const logout = async () => {
 
 export const getUsers = async () => {
   try {
+    // Debug user fetching start
+    console.log('Starting to fetch users...');
+    const loggedInUser = await CometChat.getLoggedInUser();
+    console.log('Current logged in user:', loggedInUser);
+    
     const usersRequest = new CometChat.UsersRequestBuilder()
       .setLimit(30)
       .build();
     
+    console.log('Users request built, fetching...');
     const users = await usersRequest.fetchNext();
+    console.log('Users fetched successfully, count:', users?.length);
+    
+    // If no users found, create a test user for debugging
+    if (!users || users.length === 0) {
+      console.log('No users found, consider adding test users via CometChat dashboard');
+    }
+    
     return users;
   } catch (error) {
-    console.log('Error fetching users:', error);
+    console.error('Error fetching users:', error);
+    console.error('Error details:', JSON.stringify(error, null, 2));
     throw error;
   }
 };
@@ -167,18 +181,36 @@ export const getMessages = async (userID, limit = 50) => {
 };
 
 export const listenForMessages = (listenerID, callback) => {
-  CometChat.addMessageListener(
-    listenerID,
-    new CometChat.MessageListener({
-      onTextMessageReceived: textMessage => {
-        callback(textMessage);
-      }
-    })
-  );
-  
-  return () => {
-    CometChat.removeMessageListener(listenerID);
-  };
+  try {
+    console.log(`Setting up message listener with ID: ${listenerID}`);
+    
+    CometChat.addMessageListener(
+      listenerID,
+      new CometChat.MessageListener({
+        onTextMessageReceived: textMessage => {
+          console.log(`Message received from: ${textMessage.sender.uid}`, textMessage);
+          callback(textMessage);
+        },
+        onMediaMessageReceived: mediaMessage => {
+          console.log(`Media message received from: ${mediaMessage.sender.uid}`, mediaMessage);
+          callback(mediaMessage);
+        },
+        onCustomMessageReceived: customMessage => {
+          console.log(`Custom message received from: ${customMessage.sender.uid}`, customMessage);
+          callback(customMessage);
+        }
+      })
+    );
+    
+    return () => {
+      console.log(`Removing message listener: ${listenerID}`);
+      CometChat.removeMessageListener(listenerID);
+    };
+  } catch (error) {
+    console.error("Error setting up message listener:", error);
+    // Return a no-op cleanup function in case of error
+    return () => {};
+  }
 };
 
 /**
@@ -234,21 +266,33 @@ export const endTypingIndicator = (receiverID, receiverType = CometChat.RECEIVER
  * @param {string} listenerID - Unique ID for the listener
  * @param {function} onTypingStarted - Callback when someone starts typing
  * @param {function} onTypingEnded - Callback when someone stops typing
+ * @returns {function} Cleanup function to remove the listener
  */
 export const listenForTypingIndicators = (listenerID, onTypingStarted, onTypingEnded) => {
-  CometChat.addTypingListener(
-    listenerID,
-    new CometChat.TypingListener({
-      onTypingStarted: typingIndicator => {
-        onTypingStarted(typingIndicator);
-      },
-      onTypingEnded: typingIndicator => {
-        onTypingEnded(typingIndicator);
-      }
-    })
-  );
-  
-  return () => {
-    CometChat.removeTypingListener(listenerID);
-  };
+  try {
+    console.log(`Setting up typing indicator listener with ID: ${listenerID}`);
+    
+    CometChat.addTypingListener(
+      listenerID,
+      new CometChat.TypingListener({
+        onTypingStarted: typingIndicator => {
+          console.log(`Typing started by: ${typingIndicator.sender.uid}`);
+          onTypingStarted(typingIndicator);
+        },
+        onTypingEnded: typingIndicator => {
+          console.log(`Typing ended by: ${typingIndicator.sender.uid}`);
+          onTypingEnded(typingIndicator);
+        }
+      })
+    );
+    
+    return () => {
+      console.log(`Removing typing indicator listener: ${listenerID}`);
+      CometChat.removeTypingListener(listenerID);
+    };
+  } catch (error) {
+    console.error("Error setting up typing indicator listener:", error);
+    // Return a no-op cleanup function in case of error
+    return () => {};
+  }
 };

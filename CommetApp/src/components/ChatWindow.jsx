@@ -12,6 +12,8 @@ import useAuth from '../contexts/useAuth';
 import '../App.css';
 
 const ChatWindow = ({ selectedUser }) => {
+  console.log('ChatWindow: Component rendering with user:', selectedUser?.uid);
+  
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -22,6 +24,32 @@ const ChatWindow = ({ selectedUser }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef(null);
+  const hasInitializedRef = useRef(false);
+
+  // Enhanced validation for selectedUser
+  useEffect(() => {
+    if (selectedUser) {
+      console.log('ChatWindow: selectedUser received:', selectedUser);
+      
+      // Check if the selectedUser object has all required properties
+      if (!selectedUser.uid) {
+        console.error('ChatWindow: selectedUser is missing uid property:', selectedUser);
+        setError('Invalid user selected. Missing user ID.');
+        return;
+      }
+      
+      console.log('ChatWindow: selectedUser validation passed, uid:', selectedUser.uid);
+      
+      // Reset error state if previously had validation error
+      if (error === 'Invalid user selected. Missing user ID.') {
+        setError(null);
+      }
+      
+      hasInitializedRef.current = true;
+    } else {
+      console.log('ChatWindow: No selectedUser received');
+    }
+  }, [selectedUser, error]);
 
   // Format time from timestamp
   const formatTime = (timestamp) => {
@@ -32,19 +60,33 @@ const ChatWindow = ({ selectedUser }) => {
 
   // Fetch messages when selected user changes
   useEffect(() => {
-    if (!selectedUser) return;
+    if (!selectedUser) {
+      console.log('ChatWindow: No selectedUser in fetchMessages effect');
+      return;
+    }
 
+    if (!selectedUser.uid) {
+      console.error('ChatWindow: selectedUser missing uid property in fetchMessages');
+      setError('Invalid user selected. Cannot load messages.');
+      return;
+    }
+
+    console.log('ChatWindow: Fetching messages for user:', selectedUser.uid);
+    
     const fetchChatMessages = async () => {
       try {
         setLoading(true);
         setError(null);
+        console.log('ChatWindow: Starting to fetch messages...');
         const messageList = await getMessages(selectedUser.uid);
-        setMessages(messageList);
+        console.log('ChatWindow: Messages fetched, count:', messageList?.length || 0);
+        setMessages(messageList || []);
       } catch (err) {
         console.error('Error fetching messages:', err);
-        setError('Failed to load messages');
+        setError('Failed to load messages: ' + (err.message || 'Unknown error'));
       } finally {
         setLoading(false);
+        console.log('ChatWindow: Loading state set to false');
       }
     };
 
@@ -58,8 +100,12 @@ const ChatWindow = ({ selectedUser }) => {
 
   // Listen for real-time messages and typing indicators
   useEffect(() => {
-    if (!selectedUser) return;
+    if (!selectedUser || !currentUser) {
+      console.log('ChatWindow: Missing selectedUser or currentUser, skipping listeners setup');
+      return;
+    }
 
+    console.log('ChatWindow: Setting up message and typing listeners for', selectedUser.uid);
     const listenerId = `listener_${currentUser.uid}_${selectedUser.uid}`;
 
     // Listen for new messages
@@ -85,10 +131,11 @@ const ChatWindow = ({ selectedUser }) => {
     );
 
     return () => {
+      console.log('ChatWindow: Cleaning up listeners');
       removeMessageListener();
       removeTypingListener();
     };
-  }, [selectedUser, currentUser.uid]);
+  }, [selectedUser, currentUser]);
 
   // Handle input change with typing indicators
   const handleInputChange = (e) => {
@@ -149,23 +196,68 @@ const ChatWindow = ({ selectedUser }) => {
     }
   };
 
-  if (loading) {
+  // Early return for no selected user - with enhanced debug info
+  if (!selectedUser) {
+    console.log('ChatWindow: No selected user, returning early');
     return (
-      <div className="chat-window">
+      <div className="chat-window" style={{ border: '2px solid red', padding: '20px', textAlign: 'center' }}>
+        <div className="chat-header">
+          <h2>No user selected</h2>
+        </div>
+        <div className="messages-loading">
+          <p>Please select a user to start chatting.</p>
+          <p style={{ fontSize: '12px', marginTop: '10px', color: '#999' }}>
+            Debug: selectedUser state is null or undefined
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Early return for invalid user object
+  if (!selectedUser.uid) {
+    console.error('ChatWindow: Invalid selectedUser object (missing uid):', selectedUser);
+    return (
+      <div className="chat-window" style={{ border: '2px solid orange', padding: '20px', textAlign: 'center' }}>
+        <div className="chat-header">
+          <h2>Invalid User Data</h2>
+        </div>
+        <div className="messages-error">
+          <p>The selected user data is invalid. Missing user ID.</p>
+          <p style={{ fontSize: '12px', marginTop: '10px', color: '#999' }}>
+            Debug: selectedUser={JSON.stringify(selectedUser)}
+          </p>
+          <button 
+            className="submit-button" 
+            onClick={() => window.location.reload()}
+            style={{ marginTop: '1rem', maxWidth: '200px' }}
+          >
+            Reload App
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    console.log('ChatWindow: In loading state for user:', selectedUser.uid);
+    return (
+      <div className="chat-window" style={{ border: '2px solid blue' }}>
         <div className="chat-header">
           <h2>{selectedUser.name || selectedUser.uid}</h2>
         </div>
         <div className="messages-loading">
           <div className="loading-spinner"></div>
-          <p>Loading messages...</p>
+          <p>Loading messages for {selectedUser.name || selectedUser.uid}...</p>
         </div>
       </div>
     );
   }
 
   if (error) {
+    console.log('ChatWindow: In error state:', error);
     return (
-      <div className="chat-window">
+      <div className="chat-window" style={{ border: '2px solid yellow' }}>
         <div className="chat-header">
           <h2>{selectedUser.name || selectedUser.uid}</h2>
         </div>
@@ -183,8 +275,11 @@ const ChatWindow = ({ selectedUser }) => {
     );
   }
 
+  console.log('ChatWindow: Rendering main chat UI for user:', selectedUser.uid);
+  
+  // Main return with chat UI 
   return (
-    <div className="chat-window">
+    <div className="chat-window" style={{ border: '2px solid green' }}>
       <div className="chat-header">
         <div className="user-avatar" style={{ width: '36px', height: '36px', marginRight: '12px' }}>
           {selectedUser.avatar ? (
@@ -221,7 +316,8 @@ const ChatWindow = ({ selectedUser }) => {
         ) : (
           <div className="messages-list">
             {messages.map((message) => {
-              const isSent = message.sender === currentUser.uid;
+              // Fix for properly identifying sent vs received messages
+              const isSent = message.sender?.uid === currentUser?.uid;
               return (
                 <div 
                   key={message.id} 

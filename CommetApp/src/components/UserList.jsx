@@ -12,9 +12,13 @@ const UserList = ({ selectedUser, onSelectUser }) => {
     const loadUsers = async () => {
       try {
         setLoading(true);
+        console.log('Fetching users...');
         const userList = await getUsers();
+        console.log('Users fetched:', userList);
+        
         // Filter out the current user
         const filteredUsers = userList.filter(user => user.uid !== currentUser?.uid);
+        console.log('Filtered users:', filteredUsers);
         setUsers(filteredUsers);
       } catch (err) {
         console.error('Error fetching users:', err);
@@ -26,6 +30,39 @@ const UserList = ({ selectedUser, onSelectUser }) => {
 
     loadUsers();
   }, [currentUser]);
+
+  // Improved user selection handler with direct object creation
+  const handleUserSelect = (user) => {
+    try {
+      console.log('UserList: Attempting to select user:', user.uid);
+      
+      if (!user || !user.uid) {
+        console.error('UserList: Invalid user object:', user);
+        return;
+      }
+      
+      // Create a clean user object with only the necessary properties
+      const cleanUser = {
+        uid: user.uid,
+        name: user.name || user.uid,
+        avatar: user.avatar || null,
+        status: user.status || 'offline'
+      };
+      
+      // Log the clean user object
+      console.log('UserList: Clean user object created:', cleanUser);
+      
+      // Call the onSelectUser function with the clean user object
+      onSelectUser(cleanUser);
+      
+      console.log('UserList: onSelectUser callback called successfully');
+    } catch (error) {
+      console.error('UserList: Error selecting user:', error);
+    }
+  };
+
+  // Added method to directly select a user by creating a simpler object
+  // Removed unused forceSelectUser function to resolve the error
 
   if (loading) {
     return (
@@ -62,6 +99,7 @@ const UserList = ({ selectedUser, onSelectUser }) => {
   return (
     <div className="users-list">
       <h2>Contacts</h2>
+      
       <ul>
         {users.map((user) => {
           const isSelected = selectedUser?.uid === user.uid;
@@ -73,7 +111,8 @@ const UserList = ({ selectedUser, onSelectUser }) => {
             <li 
               key={user.uid} 
               className={`user-item ${isSelected ? 'selected' : ''}`}
-              onClick={() => onSelectUser(user)}
+              onClick={() => handleUserSelect(user)}
+              style={{ position: 'relative', cursor: 'pointer' }}
             >
               <div className="user-avatar-container">
                 {user.avatar ? (
@@ -81,13 +120,13 @@ const UserList = ({ selectedUser, onSelectUser }) => {
                 ) : (
                   <div className="avatar-placeholder">{initials}</div>
                 )}
-                <span className={`status-indicator ${user.status}`}></span> {/* Add status class: online, away, offline */}
+                <span className={`status-indicator ${user.status || 'offline'}`}></span>
               </div>
               <div className="user-info">
                 <h3 className="user-name">{user.name || user.uid}</h3>
                 <p className="user-last-message">{user.status === 'online' ? 'Online' : 'Offline'}</p>
               </div>
-              <div className="user-time">2:30 PM</div> {/* Placeholder for time */}
+              <div className="user-time">2:30 PM</div>
             </li>
           );
         })}
