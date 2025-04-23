@@ -1,3 +1,17 @@
+## Challenges faced and suggestions
+Challenges:
+
+1. Environment config gave me some trouble and affected authentication.
+2. Message sender identification was a bit tricky — I had to throw in a few null checks.
+3. Real-time listeners would occasionally drop when switching between users.
+4. I also cleaned up some debug info that was showing up in the UI.
+
+A few suggestions that might help future devs:
+
+1. More examples for event listeners (especially around edge cases).
+2. Clearer error messages for common issues.
+3. Integration samples with state management tools like Redux or Context API would be awesome.
+   
 # CometChat React Application
 
 A real-time chat application built with React and CometChat SDK, allowing users to communicate instantly with a clean and intuitive interface.
@@ -18,11 +32,7 @@ A real-time chat application built with React and CometChat SDK, allowing users 
 - **Responsive Design**: Works on both desktop and mobile
 
 
-A few suggestions that might help future devs:
 
-1. More examples for event listeners (especially around edge cases).
-2. Clearer error messages for common issues.
-3. Integration samples with state management tools like Redux or Context API would be awesome.
 ## Tech Stack
 
 - React 18+
