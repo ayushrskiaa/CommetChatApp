@@ -17,6 +17,12 @@ A real-time chat application built with React and CometChat SDK, allowing users 
 - **Message History**: Access previous messages in conversations
 - **Responsive Design**: Works on both desktop and mobile
 
+
+A few suggestions that might help future devs:
+
+1. More examples for event listeners (especially around edge cases).
+2. Clearer error messages for common issues.
+3. Integration samples with state management tools like Redux or Context API would be awesome.
 ## Tech Stack
 
 - React 18+
